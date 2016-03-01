@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">RoboSpiceSpring</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="search_hint_text">Type Github username…</string>
+    <string name="search_button_text">Search</string>
+</resources>
