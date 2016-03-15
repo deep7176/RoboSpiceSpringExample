@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
         initUIComponents();
     }
 
-
     @Override
     protected void onStart() {
         spiceManager.start(this);

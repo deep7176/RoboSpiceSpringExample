@@ -10,6 +10,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -18,6 +19,21 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/LGPL2.1'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/notice.txt'
+        pickFirst 'META-INF/services/com.fasterxml.jackson.databind.Module'
+    }
 }
 
 repositories{
@@ -25,14 +41,13 @@ repositories{
     mavenCentral()
 }
 
-
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.2.0'
     compile 'com.android.support:design:23.2.0'
-
     //roboshits
-    compile group:'com.octo.android.robospice', name:'robospice-spring-android', version:'1.4.6'
-    compile group:'org.codehaus.jackson', name:'jackson-mapper-asl', version:'1.9.11'
+    //compile 'com.octo.android.robospice:robospice-spring-android:1.4.6'
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.11'
+    compile 'com.octo.android.robospice:robospice-spring-android:1.4.14'
 }

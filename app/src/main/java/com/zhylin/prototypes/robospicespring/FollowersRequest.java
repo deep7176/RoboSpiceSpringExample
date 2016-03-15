@@ -18,10 +18,7 @@ public class FollowersRequest extends SpringAndroidSpiceRequest<FollowerList> {
 
     @Override
     public FollowerList loadDataFromNetwork() throws Exception {
-
-        String url = String.format("https://api.github.com/users/%s/followers",
-                user);
-
+        String url = String.format("https://api.github.com/users/%s/followers", user);
         return getRestTemplate().getForObject(url, FollowerList.class);
     }
 
