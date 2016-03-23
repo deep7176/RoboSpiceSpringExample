@@ -1,25 +1,25 @@
 package com.zhylin.prototypes.robospicespring;
 
 import com.octo.android.robospice.request.springandroid.SpringAndroidSpiceRequest;
-import com.zhylin.prototypes.robospicespring.model.FollowerList;
+import com.zhylin.prototypes.robospicespring.model.ResultList;
 
 /**
  * Created by deeptaco on 2/29/16.
  */
 
-public class FollowersRequest extends SpringAndroidSpiceRequest<FollowerList> {
+public class MyRequest extends SpringAndroidSpiceRequest<ResultList> {
 
     private String user;
 
-    public FollowersRequest(String user) {
-        super(FollowerList.class);
+    public MyRequest(String user) {
+        super(ResultList.class);
         this.user = user;
     }
 
     @Override
-    public FollowerList loadDataFromNetwork() throws Exception {
-        String url = String.format("https://api.github.com/users/%s/followers", user);
-        return getRestTemplate().getForObject(url, FollowerList.class);
+    public ResultList loadDataFromNetwork() throws Exception {
+        String url = "http://jsonplaceholder.typicode.com/posts";
+        return getRestTemplate().getForObject(url, ResultList.class);
     }
 
     /**

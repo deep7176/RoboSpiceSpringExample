@@ -3,18 +3,13 @@ package com.zhylin.prototypes.robospicespring;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -23,8 +18,12 @@ import com.octo.android.robospice.SpiceManager;
 import com.octo.android.robospice.persistence.DurationInMillis;
 import com.octo.android.robospice.persistence.exception.SpiceException;
 import com.octo.android.robospice.request.listener.RequestListener;
-import com.zhylin.prototypes.robospicespring.model.Follower;
-import com.zhylin.prototypes.robospicespring.model.FollowerList;
+import com.zhylin.prototypes.robospicespring.model.Result;
+import com.zhylin.prototypes.robospicespring.model.ResultList;
+
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.RealmResults;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,9 +31,10 @@ public class MainActivity extends AppCompatActivity {
 
     private SpiceManager spiceManager = new SpiceManager(JacksonSpringAndroidSpiceService.class);
 
-    private ArrayAdapter<String> followersAdapter;
+    private ArrayAdapter<String> resultsAdapter;
 
     private String lastRequestCacheKey;
+    private Realm realm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        realm = Realm.getInstance(this);
 
         initUIComponents();
     }
@@ -63,31 +65,48 @@ public class MainActivity extends AppCompatActivity {
         final EditText searchQuery = (EditText) findViewById(R.id.search_field);
         ListView followersList = (ListView) findViewById(R.id.search_results);
 
-        followersAdapter = new ArrayAdapter<String>(this,
+        resultsAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1);
-        followersList.setAdapter(followersAdapter);
+        followersList.setAdapter(resultsAdapter);
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                performRequest(searchQuery.getText().toString());
-                // clear focus
-                LinearLayout linearLayout = (LinearLayout) findViewById(R.id.search_layout);
-                linearLayout.requestFocus();
+                performRequest("");
                 // hide keyboard
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(searchQuery.getWindowToken(), 0);
             }
         });
+
+        FloatingActionButton load = (FloatingActionButton) findViewById(R.id.load_button);
+        load.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadFromRealm();
+            }
+        });
+    }
+
+    private void loadFromRealm() {
+        resultsAdapter.clear();
+        resultsAdapter.notifyDataSetChanged();
+
+        RealmResults<Result> results = realm.where(Result.class).findAll();
+        for (Result result : results) {
+            String testString = result.getTitle();
+            resultsAdapter.add(testString);
+        }
+
+        resultsAdapter.notifyDataSetChanged();
     }
 
     private void performRequest(String user) {
-        MainActivity.this.setProgressBarIndeterminateVisibility(true);
-
-        FollowersRequest request = new FollowersRequest(user);
+        MyRequest request = new MyRequest(user);
         lastRequestCacheKey = request.createCacheKey();
 
-        spiceManager.execute(request, lastRequestCacheKey, DurationInMillis.ONE_MINUTE, new ListFollowersRequestListener());
+        spiceManager.execute(request, lastRequestCacheKey,
+                DurationInMillis.ONE_MINUTE, new ListFollowersRequestListener());
     }
 
     @Override
@@ -104,16 +123,15 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState.containsKey(KEY_LAST_REQUEST_CACHE_KEY)) {
             lastRequestCacheKey = savedInstanceState
                     .getString(KEY_LAST_REQUEST_CACHE_KEY);
-            spiceManager.addListenerIfPending(FollowerList.class,
+            spiceManager.addListenerIfPending(ResultList.class,
                     lastRequestCacheKey, new ListFollowersRequestListener());
-            spiceManager.getFromCache(FollowerList.class,
+            spiceManager.getFromCache(ResultList.class,
                     lastRequestCacheKey, DurationInMillis.ONE_MINUTE,
                     new ListFollowersRequestListener());
         }
     }
 
-    private class ListFollowersRequestListener implements
-            RequestListener<FollowerList> {
+    class ListFollowersRequestListener implements RequestListener<ResultList> {
         @Override
         public void onRequestFailure(SpiceException e) {
             Toast.makeText(MainActivity.this,
@@ -123,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onRequestSuccess(FollowerList listFollowers) {
+        public void onRequestSuccess(ResultList listFollowers) {
 
             // listFollowers could be null just if contentManager.getFromCache(...)
             // doesn't return anything.
@@ -131,13 +149,16 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            followersAdapter.clear();
+            resultsAdapter.clear();
 
-            for (Follower follower : listFollowers) {
-                followersAdapter.add(follower.getLogin());
+            for (Result result : listFollowers) {
+                resultsAdapter.add(result.getTitle());
+                realm.beginTransaction();
+                realm.copyToRealm(result);
+                realm.commitTransaction();
             }
 
-            followersAdapter.notifyDataSetChanged();
+            resultsAdapter.notifyDataSetChanged();
 
             MainActivity.this.setProgressBarIndeterminateVisibility(false);
         }
